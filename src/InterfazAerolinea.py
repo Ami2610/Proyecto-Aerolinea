@@ -12,8 +12,8 @@ class InterfazAerolinea:
         self.sistema = GestionAerolinea()
         self.ventana = tk.Tk()
         self.ventana.title("✈️ Sistema de Gestión de Aerolínea")
-        self.ventana.geometry("900x775")
-        self.centrar_ventana(900, 775)
+        self.ventana.geometry("1000x700")
+        self.centrar_ventana(1000, 700)
 
         self.vuelo_seleccionado = tk.StringVar()
         self.sistema.crear_vuelo_predeterminado()
@@ -157,7 +157,6 @@ class InterfazAerolinea:
     def limpiar_formulario(self):
         for campo in self.campos_pasajero.values():
             campo.delete(0, 'end')
-        self.mostrar_texto("Formulario limpiado correctamente.\n")
 
     def obtener_vuelo_actual(self):
         for vuelo in self.sistema.vuelos:

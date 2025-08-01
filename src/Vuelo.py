@@ -6,4 +6,4 @@ class Vuelo:
         self.avion = avion                # objeto Avion
 
     def __str__(self):
-        return f"{self.origen} → {self.destino} ({self.fecha})"
+        return f"{self.origen} → {self.destino} ({self.fecha}) - {self.avion.modelo})"
