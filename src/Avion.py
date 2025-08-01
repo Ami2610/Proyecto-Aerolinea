@@ -1,4 +1,3 @@
-from Asiento import Asiento
 from enum import Enum
 
 class Clase(Enum):
@@ -13,11 +12,32 @@ class Avion:
             Clase.TURISTA: filas_turista
         }
         self.butacas_por_fila = 4  # A, B, C, D
+
         self.asientos = {
             Clase.BUSINESS: [[None for _ in range(self.butacas_por_fila)] for _ in range(filas_business)],
             Clase.TURISTA: [[None for _ in range(self.butacas_por_fila)] for _ in range(filas_turista)]
         }
 
+    # --- Propiedades para GUI y compatibilidad ---
+    @property
+    def filas_business(self):
+        return self.filas[Clase.BUSINESS]
+
+    @filas_business.setter
+    def filas_business(self, valor):
+        self.filas[Clase.BUSINESS] = valor
+        self.asientos[Clase.BUSINESS] = [[None for _ in range(self.butacas_por_fila)] for _ in range(valor)]
+
+    @property
+    def filas_turista(self):
+        return self.filas[Clase.TURISTA]
+
+    @filas_turista.setter
+    def filas_turista(self, valor):
+        self.filas[Clase.TURISTA] = valor
+        self.asientos[Clase.TURISTA] = [[None for _ in range(self.butacas_por_fila)] for _ in range(valor)]
+
+    # --- Métodos principales ---
     def get_numero_filas(self, clase: Clase) -> int:
         return self.filas[clase]
 

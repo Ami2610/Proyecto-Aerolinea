@@ -41,9 +41,33 @@ class InterfazAerolinea:
         contenedor = ttk.Frame(self.ventana)
         contenedor.pack(fill="both", expand=True)
 
-        self.panel_izquierdo = ttk.Frame(contenedor, width=300)
-        self.panel_izquierdo.pack(side="left", fill="y", padx=10, pady=10)
+        # --- Scrollable panel izquierdo ---
+        panel_scroll = ttk.Frame(contenedor)
+        panel_scroll.pack(side="left", fill="y", padx=10, pady=10)
 
+        canvas = tk.Canvas(panel_scroll, width=300, height=750)
+        scrollbar = ttk.Scrollbar(panel_scroll, orient="vertical", command=canvas.yview)
+        self.scrollable_frame = ttk.Frame(canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(
+                scrollregion=canvas.bbox("all")
+            )
+        )
+
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Habilitar scroll con la rueda del ratón
+        canvas.bind_all("<MouseWheel>", lambda event: canvas.yview_scroll(-1 * int(event.delta / 120), "units"))
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        self.panel_izquierdo = self.scrollable_frame
+
+        # --- Panel derecho permanece igual ---
         self.panel_derecho = ttk.Frame(contenedor)
         self.panel_derecho.pack(side="right", fill="both", expand=True, padx=10, pady=10)
 
@@ -118,7 +142,8 @@ class InterfazAerolinea:
             ("👶 Pasajeros <18", self.pasajeros_menores),
             ("💰 Ingresos", self.mostrar_ingresos),
             ("🛬 Agregar vuelo", self.agregar_vuelo),
-            ("✂ Eliminar vuelo", self.eliminar_vuelo)
+            ("✂ Eliminar vuelo", self.eliminar_vuelo),
+            ("✏ Editar vuelo", self.editar_vuelo)
         ]
         for texto, comando in botones:
             ttk.Button(self.panel_izquierdo, text=texto, command=comando).pack(fill="x", pady=3)
@@ -260,10 +285,82 @@ class InterfazAerolinea:
                 self.vuelo_seleccionado.set(str(vuelo))
                 nueva_ventana.destroy()
                 self.mostrar_texto(f"🛫 Vuelo agregado: {vuelo}\n")
-            except:
-                messagebox.showerror("Error", "Datos inválidos")
+            except Exception as e:
+                messagebox.showerror("Error", f"Datos inválidos: {str(e)}")
 
         ttk.Button(nueva_ventana, text="Guardar", command=guardar).pack(pady=10)
+
+    def editar_vuelo(self):
+        vuelo_actual = self.obtener_vuelo_actual()
+        nueva_ventana = tk.Toplevel(self.ventana)
+        nueva_ventana.title("Editar vuelo")
+
+        # --- Contenedor principal ---
+        contenedor = ttk.Frame(nueva_ventana)
+        contenedor.pack(padx=20, pady=20, fill="both", expand=True)
+
+        entradas = {}
+        campos = ["Origen", "Destino", "Fecha (dd/mm/yyyy)", "Modelo avión", "Filas Business", "Filas Turista"]
+
+        for campo in campos:
+            fila = ttk.Frame(contenedor)
+            fila.pack(fill="x", pady=5)
+
+            ttk.Label(fila, text=campo, width=20).pack(side="left", padx=5)
+            entrada = ttk.Entry(fila, width=30)
+            entrada.pack(side="left", padx=5)
+
+            # Insertar datos existentes según el campo
+            if campo == "Origen":
+                entrada.insert(0, vuelo_actual.origen)
+            elif campo == "Destino":
+                entrada.insert(0, vuelo_actual.destino)
+            elif campo == "Fecha (dd/mm/yyyy)":
+                entrada.insert(0, vuelo_actual.fecha)
+            elif campo == "Modelo avión":
+                entrada.insert(0, vuelo_actual.avion.modelo)
+            elif campo == "Filas Business":
+                entrada.insert(0, vuelo_actual.avion.filas_business)
+            elif campo == "Filas Turista":
+                entrada.insert(0, vuelo_actual.avion.filas_turista)
+
+            entradas[campo] = entrada
+
+        # Foco inicial
+        entradas["Origen"].focus()
+
+        # --- Botón guardar ---
+        def guardar():
+            try:
+                origen = entradas["Origen"].get()
+                destino = entradas["Destino"].get()
+                fecha = entradas["Fecha (dd/mm/yyyy)"].get()
+                modelo = entradas["Modelo avión"].get()
+                filas_b = int(entradas["Filas Business"].get())
+                filas_t = int(entradas["Filas Turista"].get())
+
+                vuelo_actual.origen = origen
+                vuelo_actual.destino = destino
+                vuelo_actual.fecha = fecha
+                vuelo_actual.avion.modelo = modelo
+                vuelo_actual.avion.filas_business = filas_b
+                vuelo_actual.avion.filas_turista = filas_t
+
+                self.actualizar_selector_vuelos()
+                self.vuelo_seleccionado.set(str(vuelo_actual))
+                nueva_ventana.destroy()
+                self.mostrar_texto(f"✏ Vuelo editado: {vuelo_actual}\n")
+            except Exception as e:
+                messagebox.showerror("Error", f"Datos inválidos: {str(e)}")
+
+        ttk.Button(contenedor, text="Guardar", command=guardar).pack(pady=10)
+
+        # --- Ajustar tamaño automáticamente al contenido ---
+        nueva_ventana.update_idletasks()
+        nueva_ventana.minsize(nueva_ventana.winfo_reqwidth(), nueva_ventana.winfo_reqheight())
+
+        # --- Hacer la ventana modal (opcional) ---
+        nueva_ventana.grab_set()
 
     def eliminar_vuelo(self):
         vuelo_actual = self.obtener_vuelo_actual()
