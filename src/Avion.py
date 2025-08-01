@@ -1,67 +1,45 @@
-from enum import Enum
 from Asiento import Asiento
+from enum import Enum
 
 class Clase(Enum):
-    BUSINESS = "BUSINESS"
-    TURISTA = "TURISTA"
+    BUSINESS = 0
+    TURISTA = 1
 
 class Avion:
-    ASIENTOS_X_FILA = 4
+    def __init__(self, modelo, filas_business, filas_turista):
+        self.modelo = modelo
+        self.filas = {
+            Clase.BUSINESS: filas_business,
+            Clase.TURISTA: filas_turista
+        }
+        self.butacas_por_fila = 4  # A, B, C, D
+        self.asientos = {
+            Clase.BUSINESS: [[None for _ in range(self.butacas_por_fila)] for _ in range(filas_business)],
+            Clase.TURISTA: [[None for _ in range(self.butacas_por_fila)] for _ in range(filas_turista)]
+        }
 
-    def __init__(self, modelo: str, business: int, turista: int):
-        self._modelo = modelo
-        self._numero_asientos_business = business
-        self._numero_asientos_turista = turista
+    def get_numero_filas(self, clase: Clase) -> int:
+        return self.filas[clase]
 
-        filas_business = business // self.ASIENTOS_X_FILA
-        filas_turista = turista // self.ASIENTOS_X_FILA
+    def get_butacas_por_fila(self) -> int:
+        return self.butacas_por_fila
 
-        self._asientos_business = [[None for _ in range(self.ASIENTOS_X_FILA)] for _ in range(filas_business)]
-        self._asientos_turista = [[None for _ in range(self.ASIENTOS_X_FILA)] for _ in range(filas_turista)]
-
-    @property
-    def modelo(self):
-        return self._modelo
-
-    def get_numero_filas(self, clase: Clase):
-        if clase == Clase.BUSINESS:
-            return self._numero_asientos_business // self.ASIENTOS_X_FILA
-        else:
-            return self._numero_asientos_turista // self.ASIENTOS_X_FILA
-
-    def get_butacas_por_fila(self):
-        return self.ASIENTOS_X_FILA
-
-    def get_pasajero(self, fila: int, butaca: int, clase: Clase):
-        asiento = None
-        if clase == Clase.BUSINESS:
-            asiento = self._asientos_business[fila - 1][butaca - 1]
-        else:
-            asiento = self._asientos_turista[fila - 1][butaca - 1]
-
-        return asiento.pasajero if asiento else None
-
-    def reservar_asiento(self, fila: int, butaca: int, clase: Clase, pasajero):
-        if clase == Clase.BUSINESS:
-            if self._asientos_business[fila - 1][butaca - 1] is None:
-                asiento = Asiento(fila, butaca, pasajero)
-                self._asientos_business[fila - 1][butaca - 1] = asiento
-                return asiento
-        else:  # Clase.TURISTA
-            if self._asientos_turista[fila - 1][butaca - 1] is None:
-                asiento = Asiento(fila, butaca, pasajero)
-                self._asientos_turista[fila - 1][butaca - 1] = asiento
-                return asiento
+    def get_pasajero(self, fila: int, asiento: int, clase: Clase):
+        if 1 <= fila <= self.get_numero_filas(clase) and 1 <= asiento <= self.butacas_por_fila:
+            return self.asientos[clase][fila - 1][asiento - 1]
         return None
 
-    def mostrar_mapa_de_asientos(self):
-        print(f"\nAvión {self._modelo}")
-        for butaca in range(self.ASIENTOS_X_FILA):
-            # Mostrar BUSINESS
-            for fila in range(len(self._asientos_business)):
-                print("B" if self._asientos_business[fila][butaca] else "·", end="")
-            print(" ", end="")
-            # Mostrar TURISTA
-            for fila in range(len(self._asientos_turista)):
-                print("T" if self._asientos_turista[fila][butaca] else "·", end="")
-            print()
+    def reservar_asiento(self, fila: int, asiento: int, clase: Clase, pasajero):
+        if not (1 <= fila <= self.get_numero_filas(clase) and 1 <= asiento <= self.butacas_por_fila):
+            raise ValueError("Fila o asiento fuera de rango.")
+        if self.asientos[clase][fila - 1][asiento - 1] is not None:
+            raise Exception("El asiento ya está ocupado.")
+        self.asientos[clase][fila - 1][asiento - 1] = pasajero
+
+    def eliminar_pasajero(self, fila: int, asiento: int, clase: Clase):
+        if not (1 <= fila <= self.get_numero_filas(clase) and 1 <= asiento <= self.butacas_por_fila):
+            raise ValueError("Fila o asiento fuera de rango.")
+        self.asientos[clase][fila - 1][asiento - 1] = None
+
+    def __str__(self):
+        return f"{self.modelo} ({self.filas[Clase.BUSINESS]}F Business, {self.filas[Clase.TURISTA]}F Turista)"

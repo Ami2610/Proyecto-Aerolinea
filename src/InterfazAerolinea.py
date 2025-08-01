@@ -55,19 +55,34 @@ class InterfazAerolinea:
 
     def crear_formulario(self):
         self.campos_pasajero = {}
-        frame_datos = ttk.LabelFrame(self.panel_izquierdo, text="🧍 Datos del pasajero")
-        frame_datos.pack(fill="x", pady=5)
+        frame_encabezado = ttk.Frame(self.panel_izquierdo)
+        frame_encabezado.pack(fill="x", pady=(5, 0))
 
-        for campo in ["Nombre", "Edad", "Pasaporte", "Teléfono"]:
-            self.crear_input(frame_datos, campo)
+        label_titulo = ttk.Label(frame_encabezado, text="🧍 Datos del pasajero")
+        label_titulo.pack(side="left")
+
+        btn_limpiar = ttk.Button(frame_encabezado, text="🧹", width=2, command=self.limpiar_formulario)
+        btn_limpiar.pack(side="right", padx=5)
+
+        frame_datos = ttk.LabelFrame(self.panel_izquierdo)
+        frame_datos.pack(fill="x", pady=(0, 5))
+
+        self.crear_input(frame_datos, "Nombre", 30)
+        self.crear_input(frame_datos, "Apellido", 30)
+        self.crear_input(frame_datos, "Edad", 3)
+        self.crear_input(frame_datos, "Pasaporte", 15)
+        self.crear_input(frame_datos, "Teléfono", 15)
 
         frame_maleta = ttk.LabelFrame(frame_datos, text="📦 Maleta")
         frame_maleta.pack(fill="x", pady=5)
         for campo in ["Peso (kg)", "Ancho (cm)", "Alto (cm)", "Fondo (cm)"]:
-            self.crear_input(frame_maleta, campo)
+            self.crear_input(frame_maleta, campo, 4)
 
-        for campo in ["Clase (0: Business, 1: Turista)", "Fila", "Letra asiento (A-D)"]:
-            self.crear_input(frame_datos, campo)
+        frame_asiento = ttk.LabelFrame(frame_datos, text="💺 Asiento")
+        frame_asiento.pack(fill="x", pady=5)
+        self.crear_input(frame_datos, "Clase (0: Business, 1: Turista)", 1)
+        self.crear_input(frame_datos, "Fila", 2)
+        self.crear_input(frame_datos, "Letra asiento (A-D)", 1)
 
         ttk.Label(self.panel_izquierdo, text="Vuelo:").pack(pady=(10, 2))
         self.selector_vuelo = ttk.Combobox(
@@ -80,11 +95,18 @@ class InterfazAerolinea:
         )
         self.selector_vuelo.pack()
 
-    def crear_input(self, contenedor, etiqueta):
+    def crear_input(self, contenedor, etiqueta, max_chars):
         frame = ttk.Frame(contenedor)
         frame.pack(fill="x", padx=5, pady=2)
         ttk.Label(frame, text=etiqueta, width=25).pack(side="left")
-        entry = ttk.Entry(frame, width=15)
+
+        def validar_input(P):
+            if etiqueta == "Nombre" and any(char.isdigit() for char in P):
+                return False
+            return len(P) <= max_chars
+
+        entry = ttk.Entry(frame, width=15, validate="key")
+        entry['validatecommand'] = (self.ventana.register(validar_input), '%P')
         entry.pack(side="left")
         self.campos_pasajero[etiqueta] = entry
 
@@ -107,6 +129,11 @@ class InterfazAerolinea:
             raise ValueError(f"Campo vacío: {campo}")
         return valor
 
+    def limpiar_formulario(self):
+        for campo in self.campos_pasajero.values():
+            campo.delete(0, 'end')
+        self.mostrar_texto("Formulario limpiado correctamente.\n")
+
     def obtener_vuelo_actual(self):
         for vuelo in self.sistema.vuelos:
             if str(vuelo) == self.vuelo_seleccionado.get():
@@ -122,6 +149,7 @@ class InterfazAerolinea:
     def reservar(self):
         try:
             nombre = self.leer_entrada("Nombre")
+            apellido = self.leer_entrada("Apellido")
             edad = int(self.leer_entrada("Edad"))
             pasaporte = self.leer_entrada("Pasaporte")
             telefono = self.leer_entrada("Teléfono")
@@ -145,12 +173,12 @@ class InterfazAerolinea:
                 raise Exception("Asiento ocupado")
 
             maleta = Maleta(peso, ancho, alto, fondo)
-            pasajero = Pasajero(nombre, pasaporte, telefono, edad, maleta)
+            pasajero = Pasajero(f"{nombre} {apellido}", pasaporte, telefono, edad, maleta)
             avion.reservar_asiento(fila, asiento, clase_obj, pasajero)
 
             mensaje = (
                 f"✅ Reserva exitosa:\n"
-                f"{nombre}, edad {edad}, pasaporte {pasaporte}, asiento {fila}{letra}, clase {clase_obj.name}, vuelo {vuelo}\n"
+                f"{nombre} {apellido}, edad {edad}, pasaporte {pasaporte}, asiento {fila}{letra}, clase {clase_obj.name}, vuelo {vuelo}\n"
             )
             if maleta.excede_de_medidas() or maleta.excede_de_peso():
                 mensaje += "⚠ Exceso de equipaje. Se aplicarán cargos.\n"
