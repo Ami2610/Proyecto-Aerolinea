@@ -255,7 +255,7 @@ class InterfazAerolinea:
                     if p:
                         descuento = self.sistema.DESCUENTO_INFANTIL if p.edad < 15 else 0
                         ingresos += precio * (1 - descuento / 100)
-        self.mostrar_texto(f"💰 Ingresos estimados: €{ingresos:.2f}\n")
+        self.mostrar_texto(f"💰 Ingresos estimados: ${ingresos:.2f}\n")
 
     def agregar_vuelo(self):
         nueva_ventana = tk.Toplevel(self.ventana)
@@ -373,6 +373,3 @@ class InterfazAerolinea:
 
     def actualizar_selector_vuelos(self):
         self.selector_vuelo["values"] = [str(v) for v in self.sistema.vuelos]
-
-if __name__ == "__main__":
-    InterfazAerolinea()
