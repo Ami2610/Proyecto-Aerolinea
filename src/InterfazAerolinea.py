@@ -6,6 +6,7 @@ from Pasajero import Pasajero
 from Maleta import Maleta
 from Vuelo import Vuelo
 from Avion import Avion
+from tkinter import filedialog
 
 # --- ReportLab / utilidades ---
 from reportlab.lib.pagesizes import A4
@@ -154,7 +155,7 @@ class InterfazAerolinea:
             ("🛬 Agregar vuelo", self.agregar_vuelo),
             ("✂ Eliminar vuelo", self.eliminar_vuelo),
             ("✏ Editar vuelo", self.editar_vuelo),
-            ("🧾 Exportar PDF (pasajeros)", self.exportar_pdf_pasajeros),  # <--- NUEVO
+            ("🧾 Exportar PDF (Pasajeros)", self.exportar_pdf_pasajeros),  # <--- NUEVO
         ]
         for texto, comando in botones:
             ttk.Button(self.panel_izquierdo, text=texto, command=comando).pack(fill="x", pady=3)
@@ -409,7 +410,14 @@ class InterfazAerolinea:
             datos = self._pasajeros_de_vuelo(vuelo)
 
             nombre_archivo = f"Pasajeros_{vuelo.origen}-{vuelo.destino}_{vuelo.fecha.replace('/','-')}.pdf"
-            ruta = os.path.join(os.path.expanduser("~/Descargas"), nombre_archivo)
+            ruta = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf")],
+            initialfile=nombre_archivo,
+            title="Guardar PDF"
+            )
+            if not ruta:
+                return  
 
 
             doc = SimpleDocTemplate(ruta, pagesize=A4, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
@@ -461,6 +469,5 @@ class InterfazAerolinea:
             doc.build(elems)
 
             self.mostrar_texto(f"🧾 PDF generado:\n{ruta}")
-            messagebox.showinfo("PDF generado", f"Se creó el archivo:\n{ruta}")
         except Exception as e:
             messagebox.showerror("Error al generar PDF", str(e))
